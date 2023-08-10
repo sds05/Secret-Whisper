@@ -66,14 +66,59 @@ app.get("/register",function(req,res){
     res.render("register");
 });
 
+app.get("/secrets",function(req,res){
+    // user is already logged in
+    if(req.isAuthenticated()){
+        res.render("secrets");
+    }
+    else{
+        res.redirect("/login");
+    }
+});
+
+app.get('/logout', function(req, res, next){
+    req.logout(function(err) {
+      if (err) { return next(err); }
+      res.redirect('/');
+    });
+  });
+
 app.post("/register",function(req,res){
 
-
+    User.register({username:req.body.username},req.body.password,function(err,user){
+        if(err){
+            console.log(err);
+            res.redirect("/register");
+        }
+        else{
+            // autheticate the user or like store the user credentials (create a cookie basically)
+            passport.authenticate("local")(req,res,function(){
+                res.redirect("/secrets");
+            });
+        }
+    });
 
   
 });
 
 app.post("/login",function(req,res){
+
+    const newUser = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+
+    req.login(newUser,function(err){
+        if(err){
+            console.log(err);
+        }
+        else{
+            passport.authenticate("local")(req,res,function(){
+                res.redirect("/secrets");
+            });
+        }
+
+    });
    
 });
 
