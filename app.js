@@ -5,7 +5,8 @@ const express = require("express");
 const app = express();
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require("mongoose-encryption");
+// const encrypt = require("mongoose-encryption");
+const md5 = require("md5");
 mongoose.connect('mongodb://127.0.0.1:27017/userDB');
 
 
@@ -27,7 +28,7 @@ const userSchema = new mongoose.Schema({
 
 //encryption
 
-userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields:["password"]});   // encryptedfield - only encrypts password tab and not the email tab
+// userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields:["password"]});   // encryptedfield - only encrypts password tab and not the email tab
 
 
 const User = mongoose.model("User",userSchema);
@@ -49,7 +50,7 @@ app.get("/register",function(req,res){
 app.post("/register",function(req,res){
     const newUser = new User({
         email:req.body.username,
-        password: req.body.password
+        password: md5(req.body.password)  // md5 > turns password into irreversible hash
     });
 
     newUser.save().then(savedDoc => {
@@ -61,7 +62,7 @@ app.post("/register",function(req,res){
 
 app.post("/login",function(req,res){
    const username = req.body.username;
-   const password = req.body.password;
+   const password = md5(req.body.password);
    User.findOne({'email':username})
    .then(function (userFound) {
         if(userFound.password == password){
