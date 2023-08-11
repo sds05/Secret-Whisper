@@ -40,7 +40,8 @@ mongoose.connect('mongodb://127.0.0.1:27017/userDB');
 const userSchema = new mongoose.Schema({
     email:String,
     password:String,
-    googleId:String
+    googleId:String,
+    secret:Array
 });
 
 //encryption
@@ -100,9 +101,19 @@ app.get("/register",function(req,res){
 });
 
 app.get("/secrets",function(req,res){
+    User.find({"secret":{$ne:null}})
+    .then(function (foundUsers) {
+      res.render("secrets",{usersWithSecrets:foundUsers});
+      })
+    .catch(function (err) {
+      console.log(err);
+      })
+});
+
+app.get("/submit",function(req,res){
     // user is already logged in
     if(req.isAuthenticated()){
-        res.render("secrets");
+        res.render("submit");
     }
     else{
         res.redirect("/login");
@@ -115,6 +126,25 @@ app.get('/logout', function(req, res, next){
       res.redirect('/');
     });
   });
+
+app.post("/submit",function(req,res){
+    const userSecret = req.body.secret;
+    // console.log(req);
+    User.findById(req.user)
+    .then(foundUser => {
+      if (foundUser) {
+        foundUser.secret.push(userSecret);
+        return foundUser.save();
+      }
+      return null;
+    })
+    .then(() => {
+      res.redirect("/secrets");
+    })
+    .catch(err => {
+      console.log(err);
+    });
+});
 
 app.post("/register",function(req,res){
 
